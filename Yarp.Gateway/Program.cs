@@ -1,13 +1,28 @@
+using JwtMiddleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
-
+string myPolicyCors = "OndissJWT";
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer();
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer();
+
+builder.Services.AddCors(opt =>
+        opt.AddPolicy(name: myPolicyCors, policy =>
+        {
+            policy
+            .AllowAnyOrigin()
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+
+        }));
+
+builder.Services.AddSingleton<MyJwtService>();
+builder.Services.AddTokenAuthentication(builder.Configuration, myPolicyCors);
 
 builder.Services.AddAuthorization(options =>
 {
@@ -20,7 +35,7 @@ builder.Services.AddRateLimiter(rateLimiterOptions =>
     rateLimiterOptions.AddFixedWindowLimiter("fixed", options =>
     {
         options.Window = TimeSpan.FromSeconds(10);
-        options.PermitLimit = 5;
+        options.PermitLimit = 10;
     });
 });
 
